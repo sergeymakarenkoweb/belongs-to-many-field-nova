@@ -2,6 +2,7 @@
 
 namespace Benjacho\BelongsToManyField;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Benjacho\BelongsToManyField\Rules\ArrayRules;
@@ -19,6 +20,7 @@ class BelongsToManyField extends Field
     public $viewable = true;
     public $showAsList = false;
     public $pivotData = [];
+    public $keyField = 'id';
 
     /**
      * The field's component.
@@ -47,16 +49,21 @@ class BelongsToManyField extends Field
         $resource = $resource ?? ResourceRelationshipGuesser::guessResource($name);
 
         $this->resource = $resource;
+        /** @var HasFactory $resourceModel */
+        $resourceModel = $this->resource::model;
 
         $this->resourceClass = $resource;
         $this->resourceName = $resource::uriKey();
         $this->manyToManyRelationship = $this->attribute;
-        $this->fillUsing(function ($request, $model, $attribute, $requestAttribute) use ($resource) {
+        $this->fillUsing(function ($request, $model, $attribute, $requestAttribute) use ($resource, $resourceModel) {
             if (is_subclass_of($model, 'Illuminate\Database\Eloquent\Model')) {
-                $model::saved(function ($model) use ($attribute, $request) {
+                $model::saved(function ($model) use ($attribute, $request, $resourceModel) {
                     $inp = json_decode($request->$attribute, true);
                     if ($inp !== null)
-                        $values = array_column($inp, 'id');
+                        $values = array_map(function($item) use ($model, $resourceModel) {
+                            $keyName = (new $resourceModel)->getKeyName();
+                            return !empty($item['value']) ? $item['value'] : $item[$keyName];
+                        }, $inp);
                     else
                         $values = [];
                     if (!empty($this->pivot())) {
@@ -96,9 +103,9 @@ class BelongsToManyField extends Field
     }
 
     public function canSelectAll($messageSelectAll = 'Select All', $selectAll = true){
-      $this->selectAll = $selectAll;
-      $this->messageSelectAll = $messageSelectAll;
-      return $this->withMeta(['selectAll' => $this->selectAll, 'messageSelectAll' => $this->messageSelectAll]);
+        $this->selectAll = $selectAll;
+        $this->messageSelectAll = $messageSelectAll;
+        return $this->withMeta(['selectAll' => $this->selectAll, 'messageSelectAll' => $this->messageSelectAll]);
     }
 
     public function showAsListInDetail($showAsList = true){
@@ -119,9 +126,15 @@ class BelongsToManyField extends Field
 
     public function dependsOn($dependsOnField, $tableKey){
         return $this->withMeta([
-            'dependsOn' => $dependsOnField,
-            'dependsOnKey' => $tableKey
-        ]);
+                                   'dependsOn' => $dependsOnField,
+                                   'dependsOnKey' => $tableKey
+                               ]);
+    }
+
+    public function setKeyField(string $keyField = 'id')
+    {
+        $this->keyField = $keyField;
+        return $this;
     }
 
     public function rules($rules)
@@ -147,24 +160,25 @@ class BelongsToManyField extends Field
     public function jsonSerialize()
     {
         return array_merge([
-            'attribute' => $this->attribute,
-            'component' => $this->component(),
-            'indexName' => $this->name,
-            'name' => $this->name,
-            'nullable' => $this->nullable,
-            'optionsLabel' => $this->label,
-            'panel' => $this->panel,
-            'prefixComponent' => true,
-            'readonly' => $this->isReadonly(app(NovaRequest::class)),
-            'resourceNameRelationship' => $this->resourceName,
-            'sortable' => $this->sortable,
-            'sortableUriKey' => $this->sortableUriKey(),
-            'stacked' => $this->stacked,
-            'textAlign' => $this->textAlign,
-            'value' => $this->value,
-            'viewable' => $this->viewable,
-            'validationKey' => $this->validationKey(),
-        ], $this->meta());
+                               'attribute' => $this->attribute,
+                               'component' => $this->component(),
+                               'indexName' => $this->name,
+                               'name' => $this->name,
+                               'nullable' => $this->nullable,
+                               'optionsLabel' => $this->label,
+                               'panel' => $this->panel,
+                               'prefixComponent' => true,
+                               'readonly' => $this->isReadonly(app(NovaRequest::class)),
+                               'resourceNameRelationship' => $this->resourceName,
+                               'sortable' => $this->sortable,
+                               'sortableUriKey' => $this->sortableUriKey(),
+                               'stacked' => $this->stacked,
+                               'textAlign' => $this->textAlign,
+                               'value' => $this->value,
+                               'keyField' => $this->keyField,
+                               'viewable' => $this->viewable,
+                               'validationKey' => $this->validationKey(),
+                           ], $this->meta());
     }
 
     public function pivot()
