@@ -160,25 +160,25 @@ class BelongsToManyField extends Field
     public function jsonSerialize()
     {
         return array_merge([
-                               'attribute' => $this->attribute,
-                               'component' => $this->component(),
-                               'indexName' => $this->name,
-                               'name' => $this->name,
-                               'nullable' => $this->nullable,
-                               'optionsLabel' => $this->label,
-                               'panel' => $this->panel,
-                               'prefixComponent' => true,
-                               'readonly' => $this->isReadonly(app(NovaRequest::class)),
-                               'resourceNameRelationship' => $this->resourceName,
-                               'sortable' => $this->sortable,
-                               'sortableUriKey' => $this->sortableUriKey(),
-                               'stacked' => $this->stacked,
-                               'textAlign' => $this->textAlign,
-                               'value' => $this->value,
-                               'keyField' => $this->keyField,
-                               'viewable' => $this->viewable,
-                               'validationKey' => $this->validationKey(),
-                           ], $this->meta());
+            'attribute' => $this->attribute,
+            'component' => $this->component(),
+            'indexName' => $this->name,
+            'name' => $this->name,
+            'nullable' => $this->nullable,
+            'optionsLabel' => $this->label,
+            'panel' => $this->panel,
+            'prefixComponent' => true,
+            'readonly' => $this->isReadonly(app(NovaRequest::class)),
+            'resourceNameRelationship' => $this->resourceName,
+            'sortable' => $this->sortable,
+            'sortableUriKey' => $this->sortableUriKey(),
+            'stacked' => $this->stacked,
+            'textAlign' => $this->textAlign,
+            'value' => $this->value,
+            'keyField' => $this->keyField,
+            'viewable' => $this->viewable,
+            'validationKey' => $this->validationKey(),
+        ], $this->meta());
     }
 
     public function pivot()
