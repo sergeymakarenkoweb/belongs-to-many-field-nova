@@ -7,6 +7,7 @@ use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Benjacho\BelongsToManyField\Rules\ArrayRules;
 use Laravel\Nova\Fields\ResourceRelationshipGuesser;
+use Laravel\Nova\Resource;
 
 
 class BelongsToManyField extends Field
@@ -50,7 +51,7 @@ class BelongsToManyField extends Field
 
         $this->resource = $resource;
         /** @var HasFactory $resourceModel */
-        $resourceModel = $this->resource::model;
+        $resourceModel = $this->resource::$model;
 
         $this->resourceClass = $resource;
         $this->resourceName = $resource::uriKey();
