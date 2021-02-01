@@ -22,6 +22,8 @@ class BelongsToManyField extends Field
     public $showAsList = false;
     public $pivotData = [];
     public $keyField = 'id';
+    /** @var Coll */
+    public $optionResolveCallback = null;
 
     /**
      * The field's component.
@@ -91,6 +93,12 @@ class BelongsToManyField extends Field
         return $this->withMeta(['options' => $options]);
     }
 
+    public function optionsResolve($optionResolveCallback)
+    {
+        $this->optionResolveCallback = $optionResolveCallback;
+        return $this;
+    }
+
     public function relationModel($model)
     {
         $this->relationModel = $model;
@@ -130,6 +138,14 @@ class BelongsToManyField extends Field
                                    'dependsOn' => $dependsOnField,
                                    'dependsOnKey' => $tableKey
                                ]);
+    }
+
+    public function dependsOnField($dependsOnField) {
+        return $this->withMeta(
+            [
+                'dependsOnField' => $dependsOnField,
+            ]
+        );
     }
 
     public function setKeyField(string $keyField = 'id')

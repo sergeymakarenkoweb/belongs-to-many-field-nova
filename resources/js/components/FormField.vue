@@ -44,13 +44,13 @@
       };
     },
     mounted() {
-      window.addEventListener('scroll', this.repositionDropdown);
+        window.addEventListener('scroll', this.repositionDropdown);
     },
     destroyed() {
       window.removeEventListener('scroll', this.repositionDropdown);
     },
     created() {
-      if (this.field.dependsOn !== undefined) {
+      if (this.field.dependsOn !== undefined || this.field.dependsOnField !== undefined) {
         this.isDependant = true;
         this.registerDependencyWatchers(this.$root)
       }
@@ -105,11 +105,13 @@
       registerDependencyWatchers(root) {
         root.$children.forEach(component => {
           if (this.componentIsDependency(component)) {
-            if (component.selectedResourceId !== undefined) {
               let attribute = this.findWatchableComponentAttribute(component);
-              component.$watch(attribute, this.dependencyWatcher, {immediate: true});
-              this.dependencyWatcher(component.selectedResourceId)
-            }
+              let self = this;
+              component.$watch(attribute, function (value) {
+                  if (value === undefined) return;
+                  self.dependencyWatcher(this, value)
+              }, {immediate: true});
+              this.dependencyWatcher(component, component.value)
           }
           this.registerDependencyWatchers(component)
         })
@@ -130,13 +132,20 @@
           return false
         }
         return component.field.attribute === this.field.dependsOn
+          || component.field.attribute === this.field.dependsOnField
       },
 
-      dependencyWatcher(value) {
-        if (value === this.dependsOnValue) {
+      dependencyWatcher(component, value) {
+        if (value === this.dependsOnValue || value === undefined) {
           return
         }
-        this.dependsOnValue = value.value;
+        if (component.field.component === 'nova-belongsto-depend' && value) {
+            this.dependsOnValue = value[component.field.modelPrimaryKey]
+        } else if (value) {
+            this.dependsOnValue = value.value;
+        } else {
+            this.dependsOnValue = null
+        }
         this.fetchOptions()
       },
       /*
@@ -150,6 +159,27 @@
         this.fetchOptions();
       },
 
+      fetchOptionsFromField() {
+          let baseUrl = "/nova-vendor/belongs-to-many-field/field/";
+          this.loading = true;
+          Nova.request(
+              baseUrl +
+              this.resourceName +
+              "/" +
+              "options/" +
+              this.field.attribute +
+              "/" +
+              this.optionsLabel +
+              "/" +
+              this.field.dependsOnField +
+              "/" +
+              this.dependsOnValue
+          ).then(data => {
+              this.options = data.data;
+              this.loading = false;
+          });
+      },
+
       fetchOptions() {
         if (this.field.options) {
           this.options = this.field.options;
@@ -159,7 +189,9 @@
 
         let baseUrl = "/nova-vendor/belongs-to-many-field/";
         if (this.isDependant) {
-          if (this.dependsOnValue) {
+          if (this.field.dependsOnField && this.dependsOnValue) {
+            this.fetchOptionsFromField()
+          } else if (this.dependsOnValue) {
             this.loading = true;
             Nova.request(
               baseUrl +
