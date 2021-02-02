@@ -49,7 +49,8 @@ class ResourceController
         $sourceField = $availableFields
             ->where('attribute', $dependsOnField)
             ->first();
-        $sourceModel = $sourceField->modelClass::find($dependsOnValue);
+        $resourceClass = $sourceField->resourceClass;
+        $sourceModel = $resourceClass::$model::find($dependsOnValue);
 
         $colors = ($field->optionResolveCallback)($sourceModel);
 
