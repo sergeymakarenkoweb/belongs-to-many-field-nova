@@ -7,7 +7,6 @@ use Laravel\Nova\Fields\Field;
 use Laravel\Nova\Http\Requests\NovaRequest;
 use Benjacho\BelongsToManyField\Rules\ArrayRules;
 use Laravel\Nova\Fields\ResourceRelationshipGuesser;
-use Laravel\Nova\Resource;
 
 
 class BelongsToManyField extends Field
@@ -22,6 +21,8 @@ class BelongsToManyField extends Field
     public $showAsList = false;
     public $pivotData = [];
     public $keyField = 'id';
+    public $allColors = [];
+
     /** @var Coll */
     public $optionResolveCallback = null;
 
@@ -96,6 +97,20 @@ class BelongsToManyField extends Field
     public function optionsResolve($optionResolveCallback)
     {
         $this->optionResolveCallback = $optionResolveCallback;
+        return $this;
+    }
+
+    /**
+     * @param callable|array $colors
+     * @return $this
+     */
+    public function setAllColors($colors)
+    {
+        if (is_callable($colors)) {
+            $this->allColors = call_user_func($colors);
+        } else if (is_array($colors)) {
+            $this->allColors = $colors;
+        }
         return $this;
     }
 
@@ -195,6 +210,7 @@ class BelongsToManyField extends Field
             'keyField' => $this->keyField,
             'viewable' => $this->viewable,
             'validationKey' => $this->validationKey(),
+            'allColors' => $this->allColors
         ], $this->meta());
     }
 

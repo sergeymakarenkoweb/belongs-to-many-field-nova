@@ -12,9 +12,23 @@
           <input type="checkbox" id="checkbox" class="checkbox" v-model="selectAll">
           <label for="checkbox">{{this.field.messageSelectAll}}</label>
         </div>
-<!--          <label v-if="this.field.selectAll"><input type="checkbox" class="checkbox mb-2 mr-2">{{this.field.messageSelectAll}}</label>-->
           <multi-select ref="multiselect" @open="() => repositionDropdown(true)" :options="options"
-                        v-bind="multiSelectProps" v-model="value"/>
+                        v-bind="multiSelectProps" v-model="value" :custom-label="nameWithColor">
+            <template slot="tag" slot-scope="props">
+              <span class="inline-flex items-center multiselect__tag">
+                <span v-if="hasColor(props.option, 'second')" class="mr-2">
+                  <span class="rounded" :style="{background: getColor(props.option), width: '20px', height: '20px', display: 'inline-block'}"/>
+                </span>
+                <span>{{props.option[optionsLabel]}}</span>
+                <i aria-hidden="true" @click="props.remove(props.option)" class="multiselect__tag-icon"></i>
+              </span>
+            </template>
+            <template slot="option" slot-scope="props">
+              <color-component :data="props.option">
+                <div>{{props.option[optionsLabel]}}</div>
+              </color-component>
+            </template>
+          </multi-select>
       </div>
     </template>
   </default-field>
@@ -23,6 +37,7 @@
 <script>
   import {FormField, HandlesValidationErrors} from "laravel-nova";
   import MultiSelect from "vue-multiselect";
+  import ColorComponent from './ColorComponent'
 
   export default {
     mixins: [FormField, HandlesValidationErrors],
@@ -30,6 +45,7 @@
     props: ["resourceName", "resourceId", "field"],
 
     components: {
+      ColorComponent,
       MultiSelect
     },
     data() {
@@ -67,7 +83,7 @@
           placeholder: this.field.name,
           ...(this.field.multiselectOptions ? this.field.multiselectOptions : {})
         };
-      }
+      },
     },
     watch: {
       selectAll(value){
@@ -101,6 +117,19 @@
         };
         if (onOpen) this.$nextTick(handlePositioning);
         else handlePositioning();
+      },
+      hasColor(option) {
+        return (option.hasOwnProperty('additional')
+          && option.additional.hasOwnProperty('color_view')) || option.hasOwnProperty('color_view')
+      },
+      getColor(option) {
+        if (option.hasOwnProperty('additional') && option.additional.hasOwnProperty('color_view')) {
+          return option.additional.color_view
+        } else if (option.hasOwnProperty('color_view')) {
+          return option.color_view
+        } else {
+          return '#000000'
+        }
       },
       registerDependencyWatchers(root) {
         root.$children.forEach(component => {
@@ -242,29 +271,23 @@
       handleChange(value) {
         this.value = value;
         this.$nextTick(() => this.repositionDropdown());
-      }
+      },
+      nameWithColor(field) {
+        return field[this.optionsLabel]
+      },
     }
   };
 </script>
 
 <style src="vue-multiselect/dist/vue-multiselect.min.css"></style>
 <style type="text/css">
-  .multiselect__placeholder {
-    font-size: 1rem;
-    color: var(--70) !important;
-    margin-left: 4px
+  .multiselect__tag.inline-flex {
+    display: inline-flex;
   }
-
-  .multiselect__tags {
-    border-width: 1px;
-    border-color: var(--60);
-  }
-
-  .multiselect__select {
+  .multiselect__tag-icon {
     display: flex;
     justify-content: center;
     align-items: center;
-    width: 35px;
   }
 
   .multiselect__select::before {

@@ -31,6 +31,7 @@ class ResourceController
                 return [
                     'id' => $resource->id,
                     $optionsLabel => $resource->title(),
+                    'additional' => $resource->resource->getAttributes(),
                     'value' => $resource->getKey(),
                 ];
             })
@@ -64,6 +65,7 @@ class ResourceController
                     return [
                         'id' => $resource->id,
                         $optionsLabel => $resource->title(),
+                        'additional' => $resource->resource->getAttributes(),
                         'value' => $resource->getKey(),
                     ];
                 }
